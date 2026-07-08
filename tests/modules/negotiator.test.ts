@@ -282,6 +282,21 @@ describe('Negotiator', () => {
       const negotiator = new Negotiator(createRequest({ accept: 'text/html;level' }))
       expect(negotiator.mediaTypes()).toEqual(['text/html'])
     })
+
+    it('should not match when accept param has empty value but provided param has a value', () => {
+      const negotiator = new Negotiator(createRequest({ accept: 'text/html;level' }))
+      expect(negotiator.mediaTypes(['text/html;level=1'])).toEqual([])
+    })
+
+    it('should not match when accept param has a value but provided param is empty', () => {
+      const negotiator = new Negotiator(createRequest({ accept: 'text/html;level=1' }))
+      expect(negotiator.mediaTypes(['text/html;level'])).toEqual([])
+    })
+
+    it('should match when both accept and provided params have empty values', () => {
+      const negotiator = new Negotiator(createRequest({ accept: 'text/html;level' }))
+      expect(negotiator.mediaTypes(['text/html;level'])).toEqual(['text/html;level'])
+    })
   })
 
   describe('edge cases', () => {
