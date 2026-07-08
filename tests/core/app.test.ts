@@ -3,7 +3,7 @@ import http from 'node:http'
 import { join } from 'node:path'
 import { renderFile } from 'eta'
 import { makeFetch } from 'supertest-fetch'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { App, type Request, type Response } from '../../packages/app/src/index'
 import { View } from '../../packages/app/src/view'
 import type { RouterMethod } from '../../packages/router/src'
@@ -968,6 +968,25 @@ describe('Subapps', () => {
 
     const fetch = makeFetch(server)
     await fetch('/%').expect(400, 'Bad Request')
+  })
+  it('rethrows non-URIError errors from param decoding', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('decodeURIComponent', () => {
+      throw new Error('boom')
+    })
+
+    const app = new App()
+    app.get('/:id', (req, res) => res.send(req.params))
+
+    const server = app.listen()
+    const fetch = makeFetch(server)
+    try {
+      await fetch('/abc').expectStatus(500)
+    } finally {
+      server.close()
+      vi.unstubAllGlobals()
+      spy.mockRestore()
+    }
   })
   it('short-circuits HEAD requests with 204 when chain falls through', async () => {
     const app = new App()
