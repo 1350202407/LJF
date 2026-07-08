@@ -1,0 +1,14 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A minimal URL shortener API built with Hono, with a simple web frontend.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.0.8",
+    "hono": "4.12.28"
+  }
+}

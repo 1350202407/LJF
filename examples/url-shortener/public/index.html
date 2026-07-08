@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hono URL Shortener</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f172a;
+        --card: #1e293b;
+        --accent: #e36002;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --border: #334155;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        padding: 2.5rem 1rem;
+      }
+      main {
+        width: 100%;
+        max-width: 640px;
+      }
+      h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.75rem;
+      }
+      .subtitle {
+        margin: 0 0 1.75rem;
+        color: var(--muted);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+      form {
+        display: flex;
+        gap: 0.5rem;
+      }
+      input[type='url'] {
+        flex: 1;
+        padding: 0.7rem 0.85rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0b1220;
+        color: var(--text);
+        font-size: 1rem;
+      }
+      button {
+        padding: 0.7rem 1.1rem;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(1.08);
+      }
+      .message {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        min-height: 1.2rem;
+      }
+      .message.error {
+        color: #f87171;
+      }
+      .message.success {
+        color: #4ade80;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.6rem 0.5rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      td a:hover {
+        text-decoration: underline;
+      }
+      .target {
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--muted);
+      }
+      .clicks {
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+      .empty {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .row-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .row-head h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .refresh {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>🔥 Hono URL Shortener</h1>
+      <p class="subtitle">Create short links, redirect visitors, and track click counts.</p>
+
+      <div class="card">
+        <form id="shorten-form">
+          <input
+            id="url-input"
+            type="url"
+            placeholder="https://example.com/very/long/link"
+            required
+          />
+          <button type="submit">Shorten</button>
+        </form>
+        <div id="message" class="message"></div>
+      </div>
+
+      <div class="card">
+        <div class="row-head">
+          <h2>Your links</h2>
+          <button class="refresh" id="refresh-btn" type="button">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Short link</th>
+              <th>Target</th>
+              <th class="clicks">Clicks</th>
+            </tr>
+          </thead>
+          <tbody id="links-body">
+            <tr>
+              <td colspan="3" class="empty">No links yet — create one above.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById('shorten-form')
+      const urlInput = document.getElementById('url-input')
+      const message = document.getElementById('message')
+      const linksBody = document.getElementById('links-body')
+      const refreshBtn = document.getElementById('refresh-btn')
+
+      function setMessage(text, type) {
+        message.textContent = text
+        message.className = 'message' + (type ? ' ' + type : '')
+      }
+
+      async function loadLinks() {
+        try {
+          const res = await fetch('/api/links')
+          const data = await res.json()
+          renderLinks(data.links || [])
+        } catch (err) {
+          setMessage('Failed to load links: ' + err.message, 'error')
+        }
+      }
+
+      function renderLinks(links) {
+        if (!links.length) {
+          linksBody.innerHTML =
+            '<tr><td colspan="3" class="empty">No links yet — create one above.</td></tr>'
+          return
+        }
+        linksBody.innerHTML = links
+          .map(
+            (link) => `
+            <tr>
+              <td><a href="${link.shortUrl}" target="_blank" rel="noopener">/${link.code}</a></td>
+              <td class="target" title="${escapeHtml(link.url)}">${escapeHtml(link.url)}</td>
+              <td class="clicks">${link.clicks}</td>
+            </tr>`
+          )
+          .join('')
+      }
+
+      function escapeHtml(value) {
+        return value
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        const url = urlInput.value.trim()
+        if (!url) return
+        setMessage('Shortening…')
+        try {
+          const res = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+          })
+          const data = await res.json()
+          if (!res.ok) {
+            setMessage(data.error || 'Something went wrong', 'error')
+            return
+          }
+          setMessage('Created ' + data.shortUrl, 'success')
+          urlInput.value = ''
+          loadLinks()
+        } catch (err) {
+          setMessage('Request failed: ' + err.message, 'error')
+        }
+      })
+
+      refreshBtn.addEventListener('click', loadLinks)
+      loadLinks()
+    </script>
+  </body>
+</html>
