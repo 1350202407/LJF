@@ -36,3 +36,8 @@ export function recordClick(code) {
 export function listLinks() {
   return [...links.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
+
+// Clear all links. Intended for tests.
+export function resetStore() {
+  links.clear()
+}

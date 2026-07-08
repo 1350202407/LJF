@@ -16,6 +16,15 @@ npm start
 
 Then open http://localhost:3000. Set `PORT` to change the port.
 
+## Test
+
+```bash
+npm test
+```
+
+API tests live in `app.test.js` and run with [Vitest](https://vitest.dev), exercising
+the routes via Hono's `app.request()` (no server needed).
+
 ## API
 
 ### `POST /api/shorten`
