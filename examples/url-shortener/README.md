@@ -5,7 +5,8 @@ JSON API for creating short links, redirects visitors to the original URL, and
 tracks how many times each link has been clicked. A tiny static frontend is
 included for trying it out in the browser.
 
-Links are kept in memory, so they reset when the server restarts.
+Links are persisted to a JSON file (`data/links.json` by default), so they survive
+server restarts. Set `URLSHORTENER_DATA_FILE` to change the location.
 
 ## Run
 
