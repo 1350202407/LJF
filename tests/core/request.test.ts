@@ -794,4 +794,15 @@ describe('Request properties', () => {
 
     await fetch('/', { headers: { 'If-None-Match': etag, 'Cache-Control': 'max-age=3600' } }).expectStatus(304)
   })
+  it('req.stale is true and req.fresh is false for a non-cached request', async () => {
+    const { fetch } = InitAppAndTest(
+      (req, res) => {
+        res.set('ETag', '123').json({ fresh: req.fresh, stale: req.stale })
+      },
+      '/',
+      'GET'
+    )
+
+    await fetch('/').expect(200, { fresh: false, stale: true })
+  })
 })
